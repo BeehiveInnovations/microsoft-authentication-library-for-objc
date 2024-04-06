@@ -1,3 +1,36 @@
+## [1.3.1]
+* Preferred auth method added to device information, returned from broker
+
+## [1.3.0]
+
+## [1.2.24]
+* Fix pkey auth after server side removal of registration to use isDeviceRegistered flag from ssoContext.
+
+## [1.2.23]
+* Fix pkey auth after server side removal of registration
+
+## [1.2.22]
+* Add privacy manifest (#1984)
+
+## [1.2.21]
+* Add additional error codes for PSSO KeyId mismatch (#1946)
+
+## [1.2.20]
+* Updated common core submodule with changes for platform sso and mapping broker version in token result 
+
+## [1.2.19]
+* Introduce a way to inject external WKWebviewConfiguration for MSIDWebviewUIController - needed for MSAL C++ (#1308)
+
+## [1.2.18]
+* Fix duplicate values for error JIT codes (#1893)
+
+## [1.2.17]
+* Added ccs request id header (#1844)
+* Report WPJ v2 telemetry capability. (common core #1297)
+* Add separate error code for OneAuth telemetry purpose (common core #1292)
+* Logging improvements (common core #1290)
+* Rename some internal macro (common core #1300)
+
 ## [1.2.16]
 * Expose APIs for manually setting time_Interval for request and session resource (#1288)
 
