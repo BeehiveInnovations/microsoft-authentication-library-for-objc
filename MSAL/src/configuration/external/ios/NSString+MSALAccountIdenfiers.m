@@ -97,24 +97,24 @@
 
 - (NSData *)dataFromUInt64:(NSUInteger)value
 {
-    const int length = 16;
-    const int lastIndex = length - 1;
+    #define BUFFER_LENGTH 16
+    const int lastIndex = BUFFER_LENGTH - 1;
     const int bitsInByte = 8;
-    char buffer[length];
+    char buffer[BUFFER_LENGTH];
     
-    for (int idx = 0; idx < length; ++idx)
+    for (int idx = 0; idx < BUFFER_LENGTH; ++idx)
     {
         buffer[idx] = '\0';
     }
     
-    for (int idx = 0; idx < length; ++idx)
+    for (int idx = 0; idx < BUFFER_LENGTH; ++idx)
     {
         buffer[lastIndex - idx] = (value & 0xff);
         // Shift to next byte.
         value = value >> bitsInByte;
     }
     
-    return [[NSMutableData alloc] initWithBytes:buffer length:length];
+    return [[NSMutableData alloc] initWithBytes:buffer length:BUFFER_LENGTH];
 }
 
 @end
