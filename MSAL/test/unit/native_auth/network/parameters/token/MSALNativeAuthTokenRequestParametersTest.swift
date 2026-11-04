@@ -30,13 +30,13 @@ import XCTest
 
 final class MSALNativeAuthTokenRequestParametersTest: XCTestCase {
     let baseUrl = URL(string: DEFAULT_TEST_AUTHORITY)!
-    var config: MSALNativeAuthConfiguration! = nil
+    var config: MSALNativeAuthInternalConfiguration! = nil
     private let context = MSALNativeAuthRequestContextMock(
         correlationId: .init(uuidString: DEFAULT_TEST_UID)!
     )
 
     func testMakeEndpointUrl_whenRightUrlStringIsUsed_noExceptionThrown() {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password], capabilities: nil, redirectUri: nil))
         let parameters = MSALNativeAuthTokenRequestParameters(context: MSALNativeAuthRequestContextMock(),
                                                                     username: "username",
                                                                     continuationToken: "Test Credential Token",
@@ -45,14 +45,15 @@ final class MSALNativeAuthTokenRequestParametersTest: XCTestCase {
                                                                     password: "password",
                                                                     oobCode: "Test OTP Code",
                                                                     includeChallengeType: true,
-                                                                    refreshToken: nil)
+                                                                    refreshToken: nil,
+                                                                    claimsRequestJson: nil)
         var resultUrl: URL? = nil
         XCTAssertNoThrow(resultUrl = try parameters.makeEndpointUrl(config: config))
         XCTAssertEqual(resultUrl?.absoluteString, "https://login.microsoftonline.com/common/oauth2/v2.0/token")
     }
 
     func test_passwordParameters_shouldCreateCorrectBodyRequest() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password], capabilities: nil, redirectUri: nil))
         let params = MSALNativeAuthTokenRequestParameters(
             context: context,
             username: DEFAULT_TEST_ID_TOKEN_USERNAME,
@@ -62,7 +63,8 @@ final class MSALNativeAuthTokenRequestParametersTest: XCTestCase {
             password: "password",
             oobCode: "oob",
             includeChallengeType: true,
-            refreshToken: nil
+            refreshToken: nil,
+            claimsRequestJson: nil
         )
 
         let body = params.makeRequestBody(config: config)
@@ -72,7 +74,7 @@ final class MSALNativeAuthTokenRequestParametersTest: XCTestCase {
             "username": DEFAULT_TEST_ID_TOKEN_USERNAME,
             "continuation_token": "Test continuation Token",
             "grant_type": "password",
-            "challenge_type": "password",
+            "challenge_type": "password redirect",
             "scope": "<scope-1>",
             "password": "password",
             "oob": "oob",
@@ -83,7 +85,7 @@ final class MSALNativeAuthTokenRequestParametersTest: XCTestCase {
     }
 
     func test_nilParameters_shouldCreateCorrectParameters() throws {
-        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password, .redirect]))
+        XCTAssertNoThrow(config = try .init(clientId: DEFAULT_TEST_CLIENT_ID, authority: MSALCIAMAuthority(url: baseUrl), challengeTypes: [.password], capabilities: nil, redirectUri: nil))
         let params = MSALNativeAuthTokenRequestParameters(
             context: context,
             username: nil,
@@ -93,7 +95,8 @@ final class MSALNativeAuthTokenRequestParametersTest: XCTestCase {
             password: nil,
             oobCode: nil,
             includeChallengeType: false,
-            refreshToken: nil
+            refreshToken: nil,
+            claimsRequestJson: nil
         )
 
         let body = params.makeRequestBody(config: config)

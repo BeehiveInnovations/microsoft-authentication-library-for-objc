@@ -25,8 +25,8 @@
 //
 //------------------------------------------------------------------------------
 
-#define MSAL_VER_HIGH       1
-#define MSAL_VER_LOW        3
+#define MSAL_VER_HIGH       2
+#define MSAL_VER_LOW        12
 #define MSAL_VER_PATCH      1
 
 #define STR_HELPER(x) #x

@@ -44,7 +44,7 @@ final class ResetPasswordCodeRequiredStateTests: XCTestCase {
     // ResendCode
 
     func test_resendCode_delegate_whenError_shouldReturnCorrectError() {
-        let expectedError = ResendCodeError(message: "test error", correlationId: correlationId)
+        let expectedError = ResendCodeError(type: .generalError, message: "test error", correlationId: correlationId)
         let expectedState = ResetPasswordCodeRequiredState(controller: controller, username: "", continuationToken: "continuationToken", correlationId: correlationId)
 
         let expectedResult: ResetPasswordResendCodeResult = .error(error: expectedError, newState: expectedState)
@@ -69,7 +69,7 @@ final class ResetPasswordCodeRequiredStateTests: XCTestCase {
         let expectedResult: ResetPasswordResendCodeResult = .codeRequired(
             newState: expectedState,
             sentTo: "sentTo",
-            channelTargetType: .email,
+            channelTargetType: MSALNativeAuthChannelType(value: "email"),
             codeLength: 1
         )
         controller.resendCodeResponse = .init(expectedResult, correlationId: correlationId, telemetryUpdate: { _ in
@@ -83,7 +83,7 @@ final class ResetPasswordCodeRequiredStateTests: XCTestCase {
 
         XCTAssertEqual(delegate.newState?.continuationToken, expectedState.continuationToken)
         XCTAssertEqual(delegate.sentTo, "sentTo")
-        XCTAssertEqual(delegate.channelTargetType, .email)
+        XCTAssertEqual(delegate.channelTargetType?.isEmailType, true)
         XCTAssertEqual(delegate.codeLength, 1)
     }
 
@@ -95,7 +95,7 @@ final class ResetPasswordCodeRequiredStateTests: XCTestCase {
         let expectedResult: ResetPasswordResendCodeResult = .codeRequired(
             newState: expectedState,
             sentTo: "sentTo",
-            channelTargetType: .email,
+            channelTargetType: MSALNativeAuthChannelType(value: "email"),
             codeLength: 1
         )
         controller.resendCodeResponse = .init(expectedResult, correlationId: correlationId, telemetryUpdate: { _ in

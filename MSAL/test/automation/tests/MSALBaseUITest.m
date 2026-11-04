@@ -33,8 +33,11 @@
 #import "MSIDTestAutomationAppConfigurationRequest.h"
 #import "MSIDTestAutomationApplication.h"
 #import "MSIDAutomationOperationResponseHandler.h"
+#import "MSIDKeyVaultAccountProvider.h"
+#import "MSIDKeyVaultCredentialProvider.h"
 
 static MSIDTestConfigurationProvider *s_confProvider;
+static MSIDKeyVaultAccountProvider *s_keyVaultAccountProvider;
 
 @implementation MSALBaseUITest
 
@@ -44,6 +47,82 @@ static MSIDTestConfigurationProvider *s_confProvider;
         
     NSString *confPath = [[NSBundle bundleForClass:[self class]] pathForResource:@"conf" ofType:@"json"];
     self.class.confProvider = [[MSIDTestConfigurationProvider alloc] initWithConfigurationPath:confPath testsConfig:self.testsConfig];
+    
+    // Initialize Key Vault account provider if configured
+    [self initializeKeyVaultAccountProviderWithConfigPath:confPath];
+}
+
++ (void)initializeKeyVaultAccountProviderWithConfigPath:(NSString *)confPath
+{
+    // Read config to get Key Vault accounts URL
+    NSData *configData = [NSData dataWithContentsOfFile:confPath];
+    if (!configData) {
+        NSLog(@"[MSALBaseUITest] Could not read config file for Key Vault setup");
+        return;
+    }
+    
+    NSError *jsonError = nil;
+    NSDictionary *config = [NSJSONSerialization JSONObjectWithData:configData options:0 error:&jsonError];
+    if (!config) {
+        if (jsonError) {
+            NSLog(@"[MSALBaseUITest] Could not parse config JSON: %@", jsonError.localizedDescription);
+        }
+        else {
+            NSLog(@"[MSALBaseUITest] Could not parse config JSON");
+        }
+        return;
+    }
+    
+    // Get Key Vault accounts URL
+    NSString *keyVaultAccountsURL = config[@"keyvault_accounts_url"];
+    
+    if (!keyVaultAccountsURL || keyVaultAccountsURL.length == 0) {
+        NSLog(@"[MSALBaseUITest] No keyvault_accounts_url configured, using Lab API only");
+        return;
+    }
+    
+    NSLog(@"[MSALBaseUITest] Initializing Key Vault account provider with URL: %@", keyVaultAccountsURL);
+    
+    // Get certificate credentials from root config (used as fallback after Pipeline Cert and Azure CLI)
+    NSString *certData = config[@"certificate_data"];
+    NSString *certPassword = config[@"certificate_password"];
+    
+    // Create credential provider
+    // Credential chain: Pipeline Cert (env vars) → Azure CLI → Config Cert (fallback)
+    MSIDKeyVaultCredentialProvider *credentialProvider = [[MSIDKeyVaultCredentialProvider alloc] initWithCertificateContents:certData
+                                                                                                         certificatePassword:certPassword];
+    
+    // Create account provider
+    s_keyVaultAccountProvider = [[MSIDKeyVaultAccountProvider alloc] initWithKeyVaultURL:keyVaultAccountsURL
+                                                                      credentialProvider:credentialProvider];
+    
+    // Fetch accounts synchronously during setup
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block NSError *fetchError = nil;
+    
+    [s_keyVaultAccountProvider fetchAccountsWithCompletionHandler:^(NSError * _Nullable error) {
+        fetchError = error;
+        dispatch_semaphore_signal(semaphore);
+    }];
+    
+    // Wait up to 30 seconds for accounts to load
+    dispatch_time_t timeout = dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC);
+    if (dispatch_semaphore_wait(semaphore, timeout) != 0) {
+        NSLog(@"[MSALBaseUITest] Timeout loading Key Vault accounts, will use Lab API");
+        s_keyVaultAccountProvider = nil;
+        return;
+    }
+    
+    if (fetchError) {
+        NSLog(@"[MSALBaseUITest] Failed to load Key Vault accounts: %@. Will use Lab API.", fetchError.localizedDescription);
+        s_keyVaultAccountProvider = nil;
+        return;
+    }
+    
+    NSLog(@"[MSALBaseUITest] Key Vault accounts loaded successfully");
+    
+    // Set on the base class so MSIDBaseUITest can use it
+    self.class.keyVaultAccountProvider = s_keyVaultAccountProvider;
 }
 
 - (void)setUp
@@ -54,11 +133,11 @@ static MSIDTestConfigurationProvider *s_confProvider;
     self.redirectUriPrefix = @"x-msauth-msalautomationapp";
     
     self.testApp = [XCUIApplication new];
+    self.testApp.launchArguments = @[@"Clear cache", @"Clear cookies"]; // Clean on 1st launch
     [self.testApp launch];
+    self.testApp.launchArguments = @[]; // Clear arguments in case we launch the same app a 2nd time.
     
     [self cleanPipelines];
-    [self clearCache:self.testApp];
-    [self clearCookies:self.testApp];
 }
 
 - (void)tearDown
@@ -85,13 +164,19 @@ static MSIDTestConfigurationProvider *s_confProvider;
 - (void)assertAuthUIAppearsUsingEmbeddedWebView:(BOOL)useEmbedded
 {
     XCUIElement *webElement = self.testApp.buttons[@"URL"];
-
+    
     if (useEmbedded)
     {
         webElement = self.testApp.buttons[@"Cancel"];
     }
+    else
+    {
+        XCUIElement *registerButton = self.testApp.buttons[@"Allow"];
+        XCUIElement *result = [self waitForEitherElements:registerButton and:webElement];
+        [result msidTap];
+    }
     
-    BOOL result = [webElement waitForExistenceWithTimeout:5.0];
+    BOOL result = [webElement waitForExistenceWithTimeout:15.0];
     
     XCTAssertTrue(result);
 }
@@ -168,12 +253,22 @@ static MSIDTestConfigurationProvider *s_confProvider;
     
     while (i < 20) {
         sleep(1);
-        // If consent button found, tap it and return
+        // Check if title exists
         if (elementToCheck.exists)
         {
             XCUIElement *button = self.testApp.buttons[consentButton];
-            [button msidTap];
-            return;
+            // If consent button found, tap it and return
+            if (button.exists)
+            {
+                [button msidTap];
+                return;
+            }
+            else
+            {
+                // The title is there, but consent button not found. Return and continue.
+                // Depending on the test, will try with another consent button.
+                return;
+            }
         }
         // If consent button is not there, but system webview is still shown, wait for 1 more second
         else if ([self.testApp.buttons[@"URL"] exists] && !embeddedWebView)
@@ -214,9 +309,21 @@ static MSIDTestConfigurationProvider *s_confProvider;
         // We take the second one and tap it
         XCUIElement *secondButton = [elementQuery elementBoundByIndex:1];
         [secondButton msidTap];
-    } else
+    } 
+    else
     {
-        [self.testApp.buttons[buttonTitle] msidTap];
+        if (webViewType == MSIDWebviewTypeSafariViewController)
+        {
+            // We take the first one and force tap it, for some reason tap doesn't work
+            XCUIElement *firstButton = [elementQuery elementBoundByIndex:0];
+            
+            __auto_type coordinate = [firstButton coordinateWithNormalizedOffset:CGVectorMake(1, 1)];
+            [coordinate tap];
+        }
+        else
+        {
+            [self.testApp.buttons[buttonTitle] msidTap];
+        }
     }
 }
 

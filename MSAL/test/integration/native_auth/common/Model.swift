@@ -33,6 +33,7 @@ enum MockAPIError: Error {
 enum MockAPIEndpoint: String {
     case signInInitiate = "SignInInitiate"
     case signInChallenge = "SignInChallenge"
+    case signInIntrospect = "SignInIntrospect"
     case signInToken = "SignInToken"
     case signUpStart = "SignUpStart"
     case signUpChallenge = "SignUpChallenge"
@@ -42,6 +43,9 @@ enum MockAPIEndpoint: String {
     case resetPasswordContinue = "SSPRContinue"
     case resetPasswordSubmit = "SSPRSubmit"
     case resetPasswordPollCompletion = "SSPRPoll"
+    case jitIntrospect = "JITIntrospect"
+    case jitChallenge = "JITChallenge"
+    case jitContinue = "JITContinue"
 }
 
 enum MockAPIResponse: String {
@@ -53,7 +57,6 @@ enum MockAPIResponse: String {
     case invalidGrant = "InvalidGrant"
     case invalidScope = "InvalidScope"
     case expiredToken = "ExpiredToken"
-    case invalidPurposeToken = "InvalidPurposeToken"
     case authNotSupported = "AuthNotSupported"
     case userAlreadyExists = "UserAlreadyExists"
     case userNotFound = "UserNotFound"
@@ -68,6 +71,7 @@ enum MockAPIResponse: String {
     case authorizationPending = "AuthorizationPending"
     case challengeTypePassword = "ChallengeTypePassword"
     case challengeTypeOOB = "ChallengeTypeOOB"
+    case challengeSuccessSMS = "ChallengeSuccessSMS"
     case unsupportedChallengeType = "UnsupportedChallengeType"
     case challengeTypeRedirect = "ChallengeTypeRedirect"
     case credentialRequired = "CredentialRequired"
@@ -78,6 +82,10 @@ enum MockAPIResponse: String {
     case verificationRequired = "VerificationRequired"
     case attributeValidationFailed = "AttributeValidationFailed"
     case invalidContinuationToken = "InvalidContinuationToken"
+    case signInIntrospectSuccess = "IntrospectSuccess"
+    case signInIntrospectSMSSuccess = "IntrospectSMSSuccess"
+    case mfaRequired = "MFARequired"
+    case introspectRequired = "IntrospectRequired"
     case ssprStartSuccess = "SSPRStartSuccess"
     case ssprContinueSuccess = "SSPRContinueSuccess"
     case ssprSubmitSuccess = "SSPRSubmitSuccess"
@@ -87,6 +95,17 @@ enum MockAPIResponse: String {
     case ssprPollNotStarted = "SSPRPollNotStarted"
     case signUpContinueSuccess = "SignUpContinueSuccess"
     case invalidUsername = "InvalidUsername"
+    case registrationRequired = "RegistrationRequired"
+    // Typo below on Registraion is expected, on par with Mock API
+    case registrationIntrospectSuccess = "RegistraionIntrospectSuccess"
+    case registrationChallengeSuccess = "RegistraionChallengeSuccess"
+    case registrationChallengeSMSSuccess = "RegistraionChallengeSMSSuccess"
+    case registrationContinueSuccess = "RegistrationContinueSuccess"
+    case registrationInvalidOOBValue = "RegistrationInvalidOOBValue"
+    case registraionInvalidChallengeTarget = "RegistraionInvalidChallengeTarget"
+    case serverError = "ServerError"
+    case accessDenied = "AccessDenied"
+    case authMethodBlocked = "AuthMethodBlocked"
 }
 
 // MARK: request body

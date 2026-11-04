@@ -41,6 +41,13 @@ enum MSALNativeAuthSignInType: MSALNativeAuthOperationType {
     case signInWithMFA = 1
     case signInInitiate = 2
     case signInChallenge = 3
+    case signInIntrospect = 4
+}
+
+enum MSALNativeAuthJITType: MSALNativeAuthOperationType {
+    case jitIntrospect = 0
+    case jitChallenge = 1
+    case jitContinue = 2
 }
 
 enum MSALNativeAuthTokenType: MSALNativeAuthOperationType {

@@ -85,8 +85,6 @@ final class MSALNativeAuthSignUpContinueIntegrationTests: MSALNativeAuthIntegrat
     }
 
     func test_signUpContinue_unauthorizedClient() async throws {
-        throw XCTSkip()
-        
         try await perform_testFail(
             endpoint: .signUpContinue,
             response: .unauthorizedClient,
@@ -99,16 +97,6 @@ final class MSALNativeAuthSignUpContinueIntegrationTests: MSALNativeAuthIntegrat
             endpoint: .signUpContinue,
             response: .invalidGrant,
             expectedError: createError(.invalidGrant)
-        )
-    }
-
-    func test_signUpContinue_invalidContinuationToken() async throws {
-        throw XCTSkip()
-
-        try await perform_testFail(
-            endpoint: .signUpContinue,
-            response: .invalidContinuationToken,
-            expectedError: createError(.invalidRequest)
         )
     }
 
@@ -198,15 +186,13 @@ final class MSALNativeAuthSignUpContinueIntegrationTests: MSALNativeAuthIntegrat
     }
 
     func test_signUpContinue_validationFailed() async throws {
-        throw XCTSkip()
-
         let response = try await perform_testFail(
             endpoint: .signUpContinue,
             response: .attributeValidationFailed,
             expectedError: createError(.invalidGrant, subError: .attributeValidationFailed)
         )
 
-        XCTAssertNotNil(response.continuationToken)
+        XCTAssertNil(response.continuationToken)
         XCTAssertNotNil(response.invalidAttributes)
     }
 
@@ -227,6 +213,15 @@ final class MSALNativeAuthSignUpContinueIntegrationTests: MSALNativeAuthIntegrat
         let response: MSALNativeAuthSignUpContinueResponse? = try await performTestSucceed()
 
         XCTAssertNotNil(response?.continuationToken)
+    }
+    
+    func test_whenSignUpContinue_redirects() async throws {
+        try await mockResponse(.challengeTypeRedirect, endpoint: .signUpContinue)
+        let response: MSALNativeAuthSignUpContinueResponse? = try await performTestSucceed()
+
+        XCTAssertNil(response?.continuationToken)
+        XCTAssertEqual(response?.challengeType, .redirect)
+        XCTAssertNotNil(response?.redirectReason)
     }
 
     private func createError(_ error: MSALNativeAuthSignUpContinueOauth2ErrorCode, subError: MSALNativeAuthSubErrorCode? = nil) -> MSALNativeAuthSignUpContinueResponseError {

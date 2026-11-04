@@ -44,7 +44,7 @@ final class SignUpCodeRequiredStateTests: XCTestCase {
     // ResendCode
 
     func test_resendCode_delegate_whenError_shouldReturnCorrectError() {
-        let expectedError = ResendCodeError(message: "test error", correlationId: correlationId)
+        let expectedError = ResendCodeError(type: .generalError, message: "test error", correlationId: correlationId)
 
         let expectedResult: SignUpResendCodeResult = .error(error: expectedError, newState: nil)
         controller.resendCodeResult = .init(expectedResult, correlationId: correlationId)
@@ -67,7 +67,7 @@ final class SignUpCodeRequiredStateTests: XCTestCase {
         let expectedResult: SignUpResendCodeResult = .codeRequired(
             newState: expectedState,
             sentTo: "sentTo",
-            channelTargetType: .email,
+            channelTargetType: MSALNativeAuthChannelType(value: "email"),
             codeLength: 1
         )
         controller.resendCodeResult = .init(expectedResult, correlationId: correlationId, telemetryUpdate: { _ in
@@ -81,7 +81,7 @@ final class SignUpCodeRequiredStateTests: XCTestCase {
 
         XCTAssertEqual(delegate.newState?.continuationToken, expectedState.continuationToken)
         XCTAssertEqual(delegate.sentTo, "sentTo")
-        XCTAssertEqual(delegate.channelTargetType, .email)
+        XCTAssertEqual(delegate.channelTargetType?.isEmailType, true)
         XCTAssertEqual(delegate.codeLength, 1)
     }
 
@@ -93,7 +93,7 @@ final class SignUpCodeRequiredStateTests: XCTestCase {
         let expectedResult: SignUpResendCodeResult = .codeRequired(
             newState: expectedState,
             sentTo: "sentTo",
-            channelTargetType: .email,
+            channelTargetType: MSALNativeAuthChannelType(value: "email"),
             codeLength: 1
         )
         controller.resendCodeResult = .init(expectedResult, correlationId: correlationId, telemetryUpdate: { _ in

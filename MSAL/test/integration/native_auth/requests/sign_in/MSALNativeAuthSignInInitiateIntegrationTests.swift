@@ -56,17 +56,16 @@ class MSALNativeAuthSignInInitiateIntegrationTests: MSALNativeAuthIntegrationBas
         XCTAssertNotNil(response?.continuationToken)
     }
 
-    func test_succeedRequest_challengeTypeRedirect() async throws {
+    func test_initiateSucceedRequest_challengeTypeRedirect() async throws {
         try await mockResponse(.challengeTypeRedirect, endpoint: .signInInitiate)
         let response: MSALNativeAuthSignInInitiateResponse? = try await performTestSucceed()
 
         XCTAssertNil(response?.continuationToken)
         XCTAssertEqual(response?.challengeType, .redirect)
+        XCTAssertNotNil(response?.redirectReason)
     }
 
-    func test_failRequest_unauthorizedClient() async throws {
-        throw XCTSkip()
-        
+    func test_failRequest_unauthorizedClient() async throws {        
         try await perform_testFail(
             endpoint: .signInInitiate,
             response: .unauthorizedClient,

@@ -147,7 +147,7 @@
 
 - (void)acceptAuthSessionDialogIfNecessary:(MSIDAutomationTestRequest *)request
 {
-    if (request.webViewType == MSALWebviewTypeDefault
+    if (request.webViewType == MSIDWebviewTypeDefault
         && !request.usesEmbeddedWebView)
     {
         [self acceptAuthSessionDialog];
@@ -163,6 +163,9 @@
         [self waitForElement:allowButton];
         sleep(1);
         [allowButton msidTap];
+
+        // Dismiss Safari cookie-sharing popup if it appears after tapping Continue
+        [self dismissCookieSharingDialogIfNecessary];
     }
 }
 

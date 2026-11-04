@@ -32,10 +32,15 @@
 #import "MSIDRequestParameters+Broker.h"
 #import "MSALDeviceInformation+Internal.h"
 #import "MSALWPJMetaData+Internal.h"
+#import "MSALDeviceTokenParameters.h"
 
 #import "MSIDWorkPlaceJoinConstants.h"
 #import "MSIDWorkPlaceJoinUtil.h"
 #import "MSIDRegistrationInformation.h"
+#import "MSIDDeviceTokenGrantRequest.h"
+#import "MSIDDeviceTokenResponseHandler.h"
+#import "MSIDAuthority.h"
+#import "MSIDOauth2Factory.h"
 
 @implementation MSALDeviceInfoProvider
 
@@ -68,10 +73,7 @@
     }
 
     BOOL canCallSSOExtension = NO;
-    if (@available(macOS 10.15, *))
-    {
-        canCallSSOExtension = [MSIDSSOExtensionGetDeviceInfoRequest canPerformRequest];
-    }
+    canCallSSOExtension = [MSIDSSOExtensionGetDeviceInfoRequest canPerformRequest];
 
     MSID_LOG_WITH_CTX(MSIDLogLevelInfo, requestParameters, @"GetDeviceInfo: Should call Sso Extension decision: %i", canCallSSOExtension);
     if (!canCallSSOExtension)
@@ -81,49 +83,46 @@
         fillDeviceInfoCompletionBlock(nil, nil);
         return;
     }
-    
-    if (@available(macOS 10.15, *))
+
+    // We are here means canCallSSOExtension is TRUE
+    MSID_LOG_WITH_CTX(MSIDLogLevelVerbose, requestParameters, @"GetDeviceInfo: Creating Sso Extension request");
+    NSError *requestError;
+    MSIDSSOExtensionGetDeviceInfoRequest *ssoExtensionRequest = [[MSIDSSOExtensionGetDeviceInfoRequest alloc] initWithRequestParameters:requestParameters
+                                                                                                                                  error:&requestError];
+    if (!ssoExtensionRequest)
     {
-        // We are here means canCallSSOExtension is TRUE
-        MSID_LOG_WITH_CTX(MSIDLogLevelVerbose, requestParameters, @"GetDeviceInfo: Creating Sso Extension request");
-        NSError *requestError;
-        MSIDSSOExtensionGetDeviceInfoRequest *ssoExtensionRequest = [[MSIDSSOExtensionGetDeviceInfoRequest alloc] initWithRequestParameters:requestParameters
-                                                                                                                                      error:&requestError];
-        if (!ssoExtensionRequest)
-        {
-            MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, requestParameters, @"GetDeviceInfo: Get error when creating ssoExtensionRequest: %@", MSID_PII_LOG_MASKABLE(requestError));
-            completionBlock(nil, requestError);
-            return;
-        }
-
-        if (![self setCurrentSSOExtensionRequest:ssoExtensionRequest])
-        {
-            MSID_LOG_WITH_CTX(MSIDLogLevelError, requestParameters, @"GetDeviceInfo: Cannot start Sso Extension as another is in progress");
-            NSError *error = MSIDCreateError(MSIDErrorDomain, MSIDErrorInternal, @"Trying to start a get accounts request while one is already executing", nil, nil, nil, nil, nil, YES);
-            completionBlock(nil, error);
-            return;
-        }
-
-        MSID_LOG_WITH_CTX_PII(MSIDLogLevelInfo, requestParameters, @"GetDeviceInfo: Invoking Sso Extension with ssoExtensionRequest: %@", MSID_PII_LOG_MASKABLE(ssoExtensionRequest));
-        [ssoExtensionRequest executeRequestWithCompletion:^(MSIDDeviceInfo * _Nullable deviceInfo, NSError * _Nullable error)
-        {
-            MSID_LOG_WITH_CTX_PII(MSIDLogLevelInfo, requestParameters, @"GetDeviceInfo: Receiving results from Sso Extension with device info: %@, error: %@", MSID_PII_LOG_MASKABLE(deviceInfo), MSID_PII_LOG_MASKABLE(error));
-            [self copyAndClearCurrentSSOExtensionRequest];
-
-            if (!deviceInfo)
-            {
-                // We are returing registration details irrespective of failures due to SSO extension request as registration details must have for few clients
-                // Once we identify and fix the intermittent SSO extension issue then we should return either deviceInfo or error
-                MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, nil, @"GetDeviceInfo: Error getting device info: %@", MSID_PII_LOG_MASKABLE(error));
-                fillDeviceInfoCompletionBlock(nil, error);
-                return;
-            }
-
-            MSALDeviceInformation *msalDeviceInfo = [[MSALDeviceInformation alloc] initWithMSIDDeviceInfo:deviceInfo];
-            fillDeviceInfoCompletionBlock(msalDeviceInfo, nil);
-            return;
-        }];
+        MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, requestParameters, @"GetDeviceInfo: Get error when creating ssoExtensionRequest: %@", MSID_PII_LOG_MASKABLE(requestError));
+        completionBlock(nil, requestError);
+        return;
     }
+
+    if (![self setCurrentSSOExtensionRequest:ssoExtensionRequest])
+    {
+        MSID_LOG_WITH_CTX(MSIDLogLevelError, requestParameters, @"GetDeviceInfo: Cannot start Sso Extension as another is in progress");
+        NSError *error = MSIDCreateError(MSIDErrorDomain, MSIDErrorInternal, @"Trying to start a get accounts request while one is already executing", nil, nil, nil, nil, nil, YES);
+        completionBlock(nil, error);
+        return;
+    }
+
+    MSID_LOG_WITH_CTX_PII(MSIDLogLevelInfo, requestParameters, @"GetDeviceInfo: Invoking Sso Extension with ssoExtensionRequest: %@", MSID_PII_LOG_MASKABLE(ssoExtensionRequest));
+    [ssoExtensionRequest executeRequestWithCompletion:^(MSIDDeviceInfo * _Nullable deviceInfo, NSError * _Nullable error)
+    {
+        MSID_LOG_WITH_CTX_PII(MSIDLogLevelInfo, requestParameters, @"GetDeviceInfo: Receiving results from Sso Extension with device info: %@, error: %@", MSID_PII_LOG_MASKABLE(deviceInfo), MSID_PII_LOG_MASKABLE(error));
+        [self copyAndClearCurrentSSOExtensionRequest];
+
+        if (!deviceInfo)
+        {
+            // We are returing registration details irrespective of failures due to SSO extension request as registration details must have for few clients
+            // Once we identify and fix the intermittent SSO extension issue then we should return either deviceInfo or error
+            MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, nil, @"GetDeviceInfo: Error getting device info: %@", MSID_PII_LOG_MASKABLE(error));
+            fillDeviceInfoCompletionBlock(nil, error);
+            return;
+        }
+
+        MSALDeviceInformation *msalDeviceInfo = [[MSALDeviceInformation alloc] initWithMSIDDeviceInfo:deviceInfo];
+        fillDeviceInfoCompletionBlock(msalDeviceInfo, nil);
+        return;
+    }];
 }
 
 - (void)wpjMetaDataDeviceInfoWithRequestParameters:(MSIDRequestParameters *)requestParameters
@@ -140,6 +139,77 @@
     
     MSID_LOG_WITH_CTX_PII(MSIDLogLevelInfo, requestParameters, @"wpjMetaDataDeviceInfo: Completing filling device info for tenant Id: %@ %@", MSID_PII_LOG_MASKABLE(wpjMetaData),  MSID_PII_LOG_MASKABLE(tenantId));
     completionBlock(wpjMetaData, nil);
+}
+
+- (void)deviceTokenWithRequestParameters:(MSIDRequestParameters *)requestParameters
+                   deviceTokenParameters:(nonnull MSALDeviceTokenParameters *)deviceTokenParameters
+                         completionBlock:(MSIDRequestCompletionBlock)completionBlock
+{
+    NSString *tenantId = deviceTokenParameters.tenantId;
+    MSIDWPJKeyPairWithCert *wpjCerts = [MSIDWorkPlaceJoinUtil getWPJKeysWithTenantId:tenantId context:requestParameters];
+    
+    if (!wpjCerts)
+    {
+        NSError *error = MSIDCreateError(MSIDErrorDomain, MSIDErrorWorkplaceJoinRequired, @"Could not find device registration for the requested tenant.", nil, nil, nil, nil, nil, YES);
+        MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, requestParameters, @"deviceTokenWithRequestParameters: No device registration found for tenant Id: %@", MSID_PII_LOG_MASKABLE(tenantId));
+        completionBlock(nil, error);
+        return;
+    }
+    
+    if (!wpjCerts.certificateData)
+    {
+        NSError *error = MSIDCreateError(MSIDErrorDomain, MSIDErrorInternal, @"Could not find certificate for device registration.", nil, nil, nil, nil, nil, YES);
+        MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, requestParameters, @"deviceTokenWithRequestParameters: No certificate found for device registration for tenant Id: %@", MSID_PII_LOG_MASKABLE(tenantId));
+        completionBlock(nil, error);
+        return;
+    }
+    NSURL *endpoint = [requestParameters.authority.url URLByAppendingPathComponent:@"oauth2/token"];
+    NSError *error;
+    
+    NSError *enrollmentIdLookupError;
+    // No user is associated to device token, using the first enrollment id from Intune cache for shared device.
+    NSString *enrollmentId = [requestParameters.authority enrollmentIdForHomeAccountId:nil
+                                                                          legacyUserId:nil
+                                                                               context:requestParameters
+                                                                                 error:&enrollmentIdLookupError];
+    if (!enrollmentId)
+    {
+        MSID_LOG_WITH_CTX_PII(MSIDLogLevelInfo, requestParameters, @"deviceTokenWithRequestParameters: No enrollment id found for device token request for tenant Id: %@, error: %@", MSID_PII_LOG_MASKABLE(tenantId), MSID_PII_LOG_MASKABLE(enrollmentIdLookupError));
+    }
+    
+    MSIDDeviceTokenResponseHandler *tokenResponseHandler = [[MSIDDeviceTokenResponseHandler alloc] initWithRequestParameters:requestParameters
+                                                                                                                oauthFactory:[MSIDOauth2Factory new]];
+    
+    MSIDDeviceTokenGrantRequest *deviceTokenRequest = [[MSIDDeviceTokenGrantRequest alloc] initWithEndpoint:endpoint
+                                                                                         requestParameters:requestParameters
+                                                                                                     scopes:requestParameters.allTokenRequestScopes
+                                                                                    registrationInformation:wpjCerts
+                                                                                                   resource:deviceTokenParameters.resource
+                                                                                               enrollmentId:enrollmentId
+                                                                                            extraParameters:nil
+                                                                                                 ssoContext:nil
+                                                                                       tokenResponseHandler:tokenResponseHandler
+                                                                                                      error:&error];
+    if (!deviceTokenRequest)
+    {
+        MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, requestParameters, @"deviceTokenWithRequestParameters: Failed to create device token request for tenant Id: %@, error: %@", MSID_PII_LOG_MASKABLE(tenantId), MSID_PII_LOG_MASKABLE(error));
+        completionBlock(nil, error);
+        return;
+    }
+    
+    [deviceTokenRequest executeRequestWithCompletion:^(MSIDTokenResult * _Nullable result, NSError * _Nullable error)
+    {
+        if (!result)
+        {
+            MSID_LOG_WITH_CTX_PII(MSIDLogLevelError, requestParameters, @"deviceTokenWithRequestParameters: Error acquiring device token for tenant Id: %@, error: %@", MSID_PII_LOG_MASKABLE(tenantId), MSID_PII_LOG_MASKABLE(error));
+            completionBlock(nil, error);
+            return;
+        }
+        
+        MSID_LOG_WITH_CTX(MSIDLogLevelInfo, requestParameters, @"deviceTokenWithRequestParameters: Device token request completed for tenant Id %@.", MSID_PII_LOG_MASKABLE(tenantId));
+        
+        completionBlock(result, nil);
+    }];
 }
 
 @end

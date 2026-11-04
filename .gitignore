@@ -5,9 +5,11 @@ MSAL.xcscmblueprint
 ## Build generated
 build/
 DerivedData/
-/.build/
 /.DerivedData/
 /.idea/
 /archives/
 /MSAL.xcframework/
 /DerivedDataSimulator
+
+# Swift Package Manager
+.build/

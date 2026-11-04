@@ -28,17 +28,22 @@ protocol MSALNativeAuthSignInControlling {
 
     typealias SignInControllerResponse = MSALNativeAuthControllerTelemetryWrapper<SignInStartResult>
     typealias SignInAfterPreviousFlowControllerResponse =
-        MSALNativeAuthControllerTelemetryWrapper<Result<MSALNativeAuthUserAccountResult, MSALNativeAuthError>>
+        MSALNativeAuthControllerTelemetryWrapper<SignInAfterPreviousFlowResult>
     typealias SignInSubmitCodeControllerResponse = MSALNativeAuthControllerTelemetryWrapper<SignInVerifyCodeResult>
     typealias SignInSubmitPasswordControllerResponse = MSALNativeAuthControllerTelemetryWrapper<SignInPasswordRequiredResult>
     typealias SignInResendCodeControllerResponse = MSALNativeAuthControllerTelemetryWrapper<SignInResendCodeResult>
 
-    func signIn(params: MSALNativeAuthSignInParameters) async -> SignInControllerResponse
+    func signIn(params: MSALNativeAuthInternalSignInParameters) async -> SignInControllerResponse
 
+    // Function used for singing in after a previous flow and
+    // after registering a strong auth method (jit)
     func signIn(
-        username: String,
+        username: String?,
+        grantType: MSALNativeAuthGrantType?,
         continuationToken: String?,
         scopes: [String]?,
+        claimsRequestJson: String?,
+        telemetryId: MSALNativeAuthTelemetryApiId,
         context: MSALNativeAuthRequestContext
     ) async -> SignInAfterPreviousFlowControllerResponse
 
@@ -46,7 +51,8 @@ protocol MSALNativeAuthSignInControlling {
         _ code: String,
         continuationToken: String,
         context: MSALNativeAuthRequestContext,
-        scopes: [String]
+        scopes: [String],
+        claimsRequestJson: String?
     ) async -> SignInSubmitCodeControllerResponse
 
     func submitPassword(
@@ -54,8 +60,14 @@ protocol MSALNativeAuthSignInControlling {
         username: String,
         continuationToken: String,
         context: MSALNativeAuthRequestContext,
-        scopes: [String]
+        scopes: [String],
+        claimsRequestJson: String?
     ) async -> SignInSubmitPasswordControllerResponse
 
-    func resendCode(continuationToken: String, context: MSALNativeAuthRequestContext, scopes: [String]) async -> SignInResendCodeControllerResponse
+    func resendCode(
+        continuationToken: String,
+        context: MSALNativeAuthRequestContext,
+        scopes: [String],
+        claimsRequestJson: String?
+    ) async -> SignInResendCodeControllerResponse
 }

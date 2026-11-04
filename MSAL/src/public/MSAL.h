@@ -53,7 +53,6 @@ FOUNDATION_EXPORT const unsigned char MSAL__Framework_VersionString[];
 #import <MSAL/MSALResult.h>
 #import <MSAL/MSALAccount.h>
 #import <MSAL/MSALAccountId.h>
-#import <MSAL/MSALTelemetry.h>
 #import <MSAL/MSALAuthority.h>
 #import <MSAL/MSALAADAuthority.h>
 #import <MSAL/MSALB2CAuthority.h>
@@ -67,10 +66,7 @@ FOUNDATION_EXPORT const unsigned char MSAL__Framework_VersionString[];
 #import <MSAL/MSALIndividualClaimRequestAdditionalInfo.h>
 #import <MSAL/MSALJsonSerializable.h>
 #import <MSAL/MSALJsonDeserializable.h>
-#import <MSAL/MSALLogger.h>
-#import <MSAL/MSALTelemetry.h>
 #import <MSAL/MSALTenantProfile.h>
-#import <MSAL/MSALAccount+MultiTenantAccount.h>
 #import <MSAL/MSALAccountEnumerationParameters.h>
 #import <MSAL/MSALExternalAccountProviding.h>
 #import <MSAL/MSALWebviewParameters.h>
@@ -79,8 +75,9 @@ FOUNDATION_EXPORT const unsigned char MSAL__Framework_VersionString[];
 #import <MSAL/MSALSignoutParameters.h>
 #import <MSAL/MSALParameters.h>
 #import <MSAL/MSALPublicClientApplication+SingleAccount.h>
-#if TARGET_OS_IPHONE
 #import <MSAL/MSALNativeAuthChallengeTypes.h>
+#import <MSAL/MSALNativeAuthCapabilities.h>
+#if TARGET_OS_IPHONE
 #import <MSAL/MSALLegacySharedAccountsProvider.h>
 #endif
 #import <MSAL/MSALDeviceInformation.h>
@@ -91,3 +88,5 @@ FOUNDATION_EXPORT const unsigned char MSAL__Framework_VersionString[];
 #import <MSAL/MSALHttpMethod.h>
 #import <MSAL/MSALCIAMAuthority.h>
 #import <MSAL/MSALWipeCacheForAllAccountsConfig.h>
+#import <MSAL/MSALDeviceTokenParameters.h>
+#import <MSAL/MSALDeviceTokenResult.h>

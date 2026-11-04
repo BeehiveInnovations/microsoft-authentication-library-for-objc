@@ -62,6 +62,36 @@ final class SignInStartDelegateDispatcher: DelegateDispatcher<SignInStartDelegat
         }
     }
 
+    func dispatchAwaitingMFA(authMethods: [MSALAuthMethod], newState: AwaitingMFAState, correlationId: UUID) async {
+        if let onSignInAwaitingMFA = delegate.onSignInAwaitingMFA {
+            telemetryUpdate?(.success(()))
+            await onSignInAwaitingMFA(authMethods, newState)
+        } else {
+            let error = SignInStartError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInAwaitingMFA"),
+                correlationId: correlationId
+            )
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInStartError(error: error)
+        }
+    }
+
+    func dispatchJITRequired(authMethods: [MSALAuthMethod], newState: RegisterStrongAuthState, correlationId: UUID) async {
+        if let onSignInJITRequired = delegate.onSignInStrongAuthMethodRegistration {
+            telemetryUpdate?(.success(()))
+            await onSignInJITRequired(authMethods, newState)
+        } else {
+            let error = SignInStartError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInStrongAuthMethodRegistration"),
+                correlationId: correlationId
+            )
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInStartError(error: error)
+        }
+    }
+
     func dispatchSignInCompleted(result: MSALNativeAuthUserAccountResult, correlationId: UUID) async {
         if let onSignInCompleted = delegate.onSignInCompleted {
             telemetryUpdate?(.success(()))
@@ -90,6 +120,36 @@ final class SignInPasswordRequiredDelegateDispatcher: DelegateDispatcher<SignInP
             await delegate.onSignInPasswordRequiredError(error: error, newState: nil)
         }
     }
+
+    func dispatchAwaitingMFA(authMethods: [MSALAuthMethod], newState: AwaitingMFAState, correlationId: UUID) async {
+        if let onSignInAwaitingMFA = delegate.onSignInAwaitingMFA {
+            telemetryUpdate?(.success(()))
+            await onSignInAwaitingMFA(authMethods, newState)
+        } else {
+            let error = PasswordRequiredError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInAwaitingMFA"),
+                correlationId: correlationId
+            )
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInPasswordRequiredError(error: error, newState: nil)
+        }
+    }
+
+    func dispatchJITRequired(authMethods: [MSALAuthMethod], newState: RegisterStrongAuthState, correlationId: UUID) async {
+        if let onSignInJITRequired = delegate.onSignInStrongAuthMethodRegistration {
+            telemetryUpdate?(.success(()))
+            await onSignInJITRequired(authMethods, newState)
+        } else {
+            let error = PasswordRequiredError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInStrongAuthMethodRegistration"),
+                correlationId: correlationId
+            )
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInPasswordRequiredError(error: error, newState: nil)
+        }
+    }
 }
 
 final class SignInResendCodeDelegateDispatcher: DelegateDispatcher<SignInResendCodeDelegate> {
@@ -105,7 +165,10 @@ final class SignInResendCodeDelegateDispatcher: DelegateDispatcher<SignInResendC
             telemetryUpdate?(.success(()))
             await onSignInResendCodeCodeRequired(newState, sentTo, channelTargetType, codeLength)
         } else {
-            let error = ResendCodeError(message: requiredErrorMessage(for: "onSignInResendCodeCodeRequired"), correlationId: correlationId)
+            let error = ResendCodeError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInResendCodeCodeRequired"),
+                correlationId: correlationId)
             telemetryUpdate?(.failure(error))
             await delegate.onSignInResendCodeError(error: error, newState: nil)
         }
@@ -113,6 +176,36 @@ final class SignInResendCodeDelegateDispatcher: DelegateDispatcher<SignInResendC
 }
 
 final class SignInVerifyCodeDelegateDispatcher: DelegateDispatcher<SignInVerifyCodeDelegate> {
+
+    func dispatchAwaitingMFA(authMethods: [MSALAuthMethod], newState: AwaitingMFAState, correlationId: UUID) async {
+        if let onSignInAwaitingMFA = delegate.onSignInAwaitingMFA {
+            telemetryUpdate?(.success(()))
+            await onSignInAwaitingMFA(authMethods, newState)
+        } else {
+            let error = VerifyCodeError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInAwaitingMFA"),
+                correlationId: correlationId
+            )
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInVerifyCodeError(error: error, newState: nil)
+        }
+    }
+
+    func dispatchJITRequired(authMethods: [MSALAuthMethod], newState: RegisterStrongAuthState, correlationId: UUID) async {
+        if let onSignInJITRequired = delegate.onSignInStrongAuthMethodRegistration {
+            telemetryUpdate?(.success(()))
+            await onSignInJITRequired(authMethods, newState)
+        } else {
+            let error = VerifyCodeError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInStrongAuthMethodRegistration"),
+                correlationId: correlationId
+            )
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInVerifyCodeError(error: error, newState: nil)
+        }
+    }
 
     func dispatchSignInCompleted(result: MSALNativeAuthUserAccountResult, correlationId: UUID) async {
         if let onSignInCompleted = delegate.onSignInCompleted {

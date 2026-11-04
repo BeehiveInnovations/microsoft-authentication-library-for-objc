@@ -70,11 +70,10 @@ final class MSALNativeAuthSignUpChallengeIntegrationTests: MSALNativeAuthIntegra
 
         XCTAssertEqual(response?.challengeType, .redirect)
         XCTAssertNil(response?.continuationToken)
+        XCTAssertNotNil(response?.redirectReason)
     }
 
     func test_signUpChallenge_unauthorizedClient() async throws {
-        throw XCTSkip()
-        
         try await perform_testFail(
             endpoint: .signUpChallenge,
             response: .unauthorizedClient,
@@ -95,16 +94,6 @@ final class MSALNativeAuthSignUpChallengeIntegrationTests: MSALNativeAuthIntegra
             endpoint: .signUpChallenge,
             response: .unsupportedChallengeType,
             expectedError: createError(.unsupportedChallengeType)
-        )
-    }
-
-    func test_signUpChallenge_invalidContinuationToken() async throws {
-        throw XCTSkip()
-        
-        try await perform_testFail(
-            endpoint: .signUpChallenge,
-            response: .invalidContinuationToken,
-            expectedError: createError(.invalidRequest)
         )
     }
 

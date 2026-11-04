@@ -59,24 +59,25 @@ final class MSALNativeAuthResetPasswordSubmitIntegrationTests: MSALNativeAuthInt
         XCTAssertNotNil(response?.continuationToken)
         XCTAssertNotNil(response?.pollInterval)
     }
+    
+    func test_whenResetPasswordSubmitRedirect_ParseDoNotFail() async throws {
+        try await mockAPIHandler.addResponse(
+            endpoint: .resetPasswordSubmit,
+            correlationId: correlationId,
+            responses: [.challengeTypeRedirect]
+        )
+        let response: MSALNativeAuthResetPasswordSubmitResponse? = try await performTestSucceed()
+
+        XCTAssertNil(response?.continuationToken)
+        XCTAssertEqual(response?.challengeType, .redirect)
+        XCTAssertNotNil(response?.redirectReason)
+    }
 
     func test_resetPasswordSubmit_unauthorizedClient() async throws {
-        throw XCTSkip()
-        
         try await perform_testFail(
             endpoint: .resetPasswordSubmit,
             response: .unauthorizedClient,
             expectedError: createError(.unauthorizedClient)
-        )
-    }
-
-    func test_resetPasswordSubmit_invalidContinuationToken() async throws {
-        throw XCTSkip()
-
-        try await perform_testFail(
-            endpoint: .resetPasswordSubmit,
-            response: .invalidContinuationToken,
-            expectedError: createError(.invalidRequest)
         )
     }
 

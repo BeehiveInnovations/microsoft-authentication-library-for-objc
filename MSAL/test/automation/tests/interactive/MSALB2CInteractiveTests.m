@@ -27,6 +27,7 @@
 
 #import "MSALBaseAADUITest.h"
 #import "XCUIElement+CrossPlat.h"
+#import "MSALBaseUITest.h"
 
 @interface MSALB2CInteractiveTests : MSALBaseAADUITest
 
@@ -93,6 +94,16 @@
     {
         [self aadEnterEmail:self.testApp];
     }
+    
+    // Get pass Verify your email screen and use password to login instead
+    [self acceptConsentIfNecessary:self.testApp.staticTexts[@"Verify your email"]
+                     consentButton:@"Use your password instead"
+                   embeddedWebView:NO];
+    
+    // Sometimes there is another Verify your email screen, but with a different button title (A/B testing?)
+    [self acceptConsentIfNecessary:self.testApp.staticTexts[@"Verify your email"]
+                     consentButton:@"Use your password"
+                   embeddedWebView:NO];
 
     if (shouldEnterPassword) [self aadEnterPassword:self.testApp];;
 
@@ -121,7 +132,7 @@
     request.requestScopes = self.testApplication.defaultScopes.msidToString;
     request.testAccount = self.primaryAccount;
     request.webViewType = MSIDWebviewTypeWKWebView;
-    request.requestIDP = @"Microsoft";
+    request.requestIDP = @"MSA";
     request.promptBehavior = @"force";
     request.configurationAuthority = [self.testApplication b2cAuthorityForPolicy:@"SignInPolicy" tenantId:nil];
     request.expectedResultScopes = request.requestScopes;
@@ -155,7 +166,7 @@
     request.requestScopes = self.testApplication.defaultScopes.msidToString;
     request.testAccount = self.primaryAccount;
     request.webViewType = MSIDWebviewTypeWKWebView;
-    request.requestIDP = @"Microsoft";
+    request.requestIDP = @"MSA";
     request.promptBehavior = @"force";
     request.configurationAuthority = [self.testApplication b2cAuthorityForPolicy:@"SignInPolicy" tenantId:nil];
     request.expectedResultScopes = request.requestScopes;
@@ -186,7 +197,7 @@
     request.requestScopes = self.testApplication.defaultScopes.msidToString;
     request.testAccount = self.primaryAccount;
     request.webViewType = MSIDWebviewTypeSafariViewController;
-    request.requestIDP = @"Microsoft";
+    request.requestIDP = @"MSA";
     request.promptBehavior = @"force";
     request.configurationAuthority = [self.testApplication b2cAuthorityForPolicy:@"SignInPolicy" tenantId:nil];
     request.expectedResultScopes = request.requestScopes;
@@ -220,7 +231,7 @@
     request.testAccount = self.primaryAccount;
     request.webViewType = MSIDWebviewTypeWKWebView;
     request.usePassedWebView = YES;
-    request.requestIDP = @"Microsoft";
+    request.requestIDP = @"MSA";
     request.promptBehavior = @"force";
     request.configurationAuthority = [self.testApplication b2cAuthorityForPolicy:@"SignInPolicy" tenantId:nil];
     request.expectedResultScopes = request.requestScopes;

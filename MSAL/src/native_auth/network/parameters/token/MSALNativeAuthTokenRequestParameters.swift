@@ -36,8 +36,9 @@ struct MSALNativeAuthTokenRequestParameters: MSALNativeAuthRequestable {
     let includeChallengeType: Bool
     let clientInfo = true
     let refreshToken: String?
+    let claimsRequestJson: String?
 
-    func makeRequestBody(config: MSALNativeAuthConfiguration) -> [String: String] {
+    func makeRequestBody(config: MSALNativeAuthInternalConfiguration) -> [String: String] {
         typealias Key = MSALNativeAuthRequestParametersKey
         var parameters = [
             Key.clientId.rawValue: config.clientId,
@@ -48,7 +49,8 @@ struct MSALNativeAuthTokenRequestParameters: MSALNativeAuthRequestable {
             Key.password.rawValue: password,
             Key.oobCode.rawValue: oobCode,
             Key.clientInfo.rawValue: clientInfo.description,
-            Key.refreshToken.rawValue: refreshToken
+            Key.refreshToken.rawValue: refreshToken,
+            Key.claims.rawValue: claimsRequestJson
         ]
 
         if includeChallengeType {

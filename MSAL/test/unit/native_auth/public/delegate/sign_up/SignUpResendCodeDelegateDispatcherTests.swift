@@ -51,7 +51,7 @@ final class SignUpResendCodeDelegateDispatcherTests: XCTestCase {
 
         let expectedState = SignUpCodeRequiredState(controller: controllerFactoryMock.signUpController, username: "", continuationToken: "continuationToken", correlationId: correlationId)
         let expectedSentTo = "user@contoso.com"
-        let expectedChannelTargetType = MSALNativeAuthChannelType.email
+        let expectedChannelTargetType = MSALNativeAuthChannelType(value: "email")
         let expectedCodeLength = 4
 
         await sut.dispatchSignUpResendCodeCodeRequired(
@@ -72,7 +72,7 @@ final class SignUpResendCodeDelegateDispatcherTests: XCTestCase {
 
     func test_dispatchSignUpResendCode_whenDelegateOptionalMethodsNotImplemented() async {
         let delegate = SignUpResendCodeDelegateMethodsNotImplemented(expectation: delegateExp)
-        let expectedError = ResendCodeError(message: String(format: MSALNativeAuthErrorMessage.delegateNotImplemented, "onSignUpResendCodeCodeRequired"), correlationId: correlationId)
+        let expectedError = ResendCodeError(type: .generalError, message: String(format: MSALNativeAuthErrorMessage.delegateNotImplemented, "onSignUpResendCodeCodeRequired"), correlationId: correlationId)
 
         sut = .init(delegate: delegate, telemetryUpdate: { result in
             guard case let .failure(error) = result, let customError = error as? ResendCodeError else {
@@ -85,7 +85,7 @@ final class SignUpResendCodeDelegateDispatcherTests: XCTestCase {
 
         let expectedState = SignUpCodeRequiredState(controller: controllerFactoryMock.signUpController, username: "", continuationToken: "continuationToken", correlationId: correlationId)
         let expectedSentTo = "user@contoso.com"
-        let expectedChannelTargetType = MSALNativeAuthChannelType.email
+        let expectedChannelTargetType = MSALNativeAuthChannelType(value: "email")
         let expectedCodeLength = 4
 
         await sut.dispatchSignUpResendCodeCodeRequired(

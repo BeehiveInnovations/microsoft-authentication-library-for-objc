@@ -31,7 +31,40 @@ final class SignInAfterResetPasswordDelegateDispatcher: DelegateDispatcher<SignI
             telemetryUpdate?(.success(()))
             await onSignInCompleted(result)
         } else {
-            let error = SignInAfterResetPasswordError(message: requiredErrorMessage(for: "onSignInCompleted"), correlationId: correlationId)
+            let error = SignInAfterResetPasswordError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInCompleted"),
+                correlationId: correlationId)
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInAfterResetPasswordError(error: error)
+        }
+    }
+
+    func dispatchAwaitingMFA(authMethods: [MSALAuthMethod], newState: AwaitingMFAState, correlationId: UUID) async {
+        if let onSignInAwaitingMFA = delegate.onSignInAwaitingMFA {
+            telemetryUpdate?(.success(()))
+            await onSignInAwaitingMFA(authMethods, newState)
+        } else {
+            let error = SignInAfterResetPasswordError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInAwaitingMFA"),
+                correlationId: correlationId
+            )
+            telemetryUpdate?(.failure(error))
+            await delegate.onSignInAfterResetPasswordError(error: error)
+        }
+    }
+
+    func dispatchJITRequired(authMethods: [MSALAuthMethod], newState: RegisterStrongAuthState, correlationId: UUID) async {
+        if let onSignInJITRequired = delegate.onSignInStrongAuthMethodRegistration {
+            telemetryUpdate?(.success(()))
+            await onSignInJITRequired(authMethods, newState)
+        } else {
+            let error = SignInAfterResetPasswordError(
+                type: .generalError,
+                message: requiredErrorMessage(for: "onSignInStrongAuthMethodRegistration"),
+                correlationId: correlationId
+            )
             telemetryUpdate?(.failure(error))
             await delegate.onSignInAfterResetPasswordError(error: error)
         }

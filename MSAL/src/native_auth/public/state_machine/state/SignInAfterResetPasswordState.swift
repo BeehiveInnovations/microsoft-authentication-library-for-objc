@@ -28,26 +28,41 @@ import Foundation
 @objcMembers public class SignInAfterResetPasswordState: SignInAfterPreviousFlowBaseState {
     /// Sign in the user that just reset the password.
     /// - Parameters:
-    ///   - scopes: Optional. Permissions you want included in the access token received after sign in flow has completed.
+    ///   - parameters: Parameters used to Sign In the user after the Reset Password flow.
     ///   - delegate: Delegate that receives callbacks for the Sign In flow.
-    public func signIn(scopes: [String]? = nil, delegate: SignInAfterResetPasswordDelegate) {
+    public func signIn(parameters: MSALNativeAuthSignInAfterResetPasswordParameters, delegate: SignInAfterResetPasswordDelegate) {
         Task {
-            let controllerResponse = await signInInternal(scopes: scopes)
+            let claimsRequestJson = parameters.claimsRequest?.jsonString()
+            let controllerResponse = await signInInternal(
+                scopes: parameters.scopes,
+                claimsRequestJson: claimsRequestJson,
+                telemetryId: .telemetryApiIdSignInAfterPasswordReset
+            )
             let delegateDispatcher = SignInAfterResetPasswordDelegateDispatcher(
                 delegate: delegate,
                 telemetryUpdate: controllerResponse.telemetryUpdate
             )
 
             switch controllerResponse.result {
-            case .success(let accountResult):
+            case .completed(let accountResult):
                 await delegateDispatcher.dispatchSignInCompleted(result: accountResult, correlationId: controllerResponse.correlationId)
-            case .failure(let error):
-                let error = SignInAfterResetPasswordError(
+            case .awaitingMFA(authMethods: let authMethods, newState: let newState):
+                await delegateDispatcher.dispatchAwaitingMFA(authMethods: authMethods,
+                                                             newState: newState,
+                                                             correlationId: controllerResponse.correlationId)
+            case .jitAuthMethodsSelectionRequired(authMethods: let authMethods, newState: let newState):
+                await delegateDispatcher.dispatchJITRequired(authMethods: authMethods,
+                                                             newState: newState,
+                                                             correlationId: controllerResponse.correlationId)
+            case .error(let error):
+                let signInAfterResetPassword = SignInAfterResetPasswordError(
+                    type: error.type,
                     message: error.errorDescription,
                     correlationId: error.correlationId,
-                    errorCodes: error.errorCodes
+                    errorCodes: error.errorCodes,
+                    errorUri: error.errorUri
                 )
-                await delegate.onSignInAfterResetPasswordError(error: error)
+                await delegate.onSignInAfterResetPasswordError(error: signInAfterResetPassword)
             }
         }
     }

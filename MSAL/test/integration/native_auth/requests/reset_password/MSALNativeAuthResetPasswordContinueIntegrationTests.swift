@@ -60,10 +60,21 @@ final class MSALNativeAuthResetPasswordContinueIntegrationTests: MSALNativeAuthI
         XCTAssertNotNil(response?.continuationToken)
         XCTAssertNotNil(response?.expiresIn)
     }
+    
+    func test_whenResetPasswordContinueRedirect_ParseDoNotFail() async throws {
+        try await mockAPIHandler.addResponse(
+            endpoint: .resetPasswordContinue,
+            correlationId: correlationId,
+            responses: [.challengeTypeRedirect]
+        )
+        let response: MSALNativeAuthResetPasswordContinueResponse? = try await performTestSucceed()
+
+        XCTAssertNil(response?.continuationToken)
+        XCTAssertEqual(response?.challengeType, .redirect)
+        XCTAssertNotNil(response?.redirectReason)
+    }
 
     func test_resetPasswordContinue_unauthorizedClient() async throws {
-        throw XCTSkip()
-        
         try await perform_testFail(
             endpoint: .resetPasswordContinue,
             response: .unauthorizedClient,
@@ -76,16 +87,6 @@ final class MSALNativeAuthResetPasswordContinueIntegrationTests: MSALNativeAuthI
             endpoint: .resetPasswordContinue,
             response: .expiredToken,
             expectedError: createResetPasswordContinueError(error: .expiredToken)
-        )
-    }
-
-    func test_resetPasswordContinue_invalidContinuationToken() async throws {
-        throw XCTSkip()
-        
-        try await perform_testFail(
-            endpoint: .resetPasswordContinue,
-            response: .invalidContinuationToken,
-            expectedError: createResetPasswordContinueError(error: .invalidRequest)
         )
     }
 
@@ -102,16 +103,6 @@ final class MSALNativeAuthResetPasswordContinueIntegrationTests: MSALNativeAuthI
             endpoint: .resetPasswordContinue,
             response: .invalidOOBValue,
             expectedError: createResetPasswordContinueError(error: .invalidGrant, subError: .invalidOOBValue)
-        )
-    }
-
-    func test_resetPasswordContinue_verificationRequired() async throws {
-        throw XCTSkip()
-        
-        try await perform_testFail(
-            endpoint: .resetPasswordContinue,
-            response: .verificationRequired,
-            expectedError: createResetPasswordContinueError(error: .verificationRequired)
         )
     }
 

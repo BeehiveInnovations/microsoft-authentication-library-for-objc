@@ -6,6 +6,8 @@ Microsoft Authentication Library for iOS and macOS
 |-------------------------------|---------------------------|-------------------|---------|----------|
 | [MSAL iOS and macOS documentation](https://learn.microsoft.com/en-us/entra/msal/objc/) | &#8226;  [Microsoft Entra ID (workforce samples)](https://learn.microsoft.com/en-us/entra/identity-platform/sample-v2-code?tabs=framework#ios)<br/>&#8226; [Microsoft Entra External ID (customer samples)](https://learn.microsoft.com/en-us/entra/external-id/customers/samples-ciam-all?tabs=apptype#mobile)          | [ SDK reference](https://azuread.github.io/microsoft-authentication-library-for-objc/)             | [Get support](README.md#community-help-and-support) | [Feedback](https://forms.office.com/r/xuBV0CzEih) |
 
+> ⚠️ **MSAL 2.x Released with Breaking Changes**  
+> Review the [MSAL 2.x for iOS/macOS – Major Release Announcement & Migration Guide](docs/MSAL_2x_Migration_Guide.md) for a complete overview of the changes and step-by-step migration instructions.
 
 The Microsoft Authentication Library (MSAL) for iOS and macOS is an auth SDK that can be used to seamlessly integrate authentication into your apps using industry standard OAuth2 and OpenID Connect. It allows you to sign in users or apps with Microsoft identities. These identities include Microsoft Entra ID work and school accounts, personal Microsoft accounts, social accounts, and customer accounts. 
 
@@ -13,7 +15,7 @@ Using MSAL for iOS and macOS, you can acquire security tokens from the Microsoft
 
 #### Native authentication support in MSAL
 
-MSAL iOS also provides native authentication APIs that allow applications to implement a native experience with end-to-end customizable flows in their mobile applications. With native authentication, users are guided through a rich, native, mobile-first sign-up and sign-in journey without leaving the app. The native authentication feature is only available for mobile apps on [External ID for customers](https://learn.microsoft.com/en-us/entra/external-id/customers/concept-native-authentication). macOS is not supported. It is recommended to always use the most up-to-date version of the SDK.
+MSAL iOS and macOS also provides native authentication APIs that allow applications to implement a native experience with end-to-end customizable flows in their applications. With native authentication, users are guided through a rich, native, sign-up and sign-in journey without leaving the app. The native authentication feature is available for mobile (iOS) and desktop (macOS) apps on [External ID for customers](https://learn.microsoft.com/en-us/entra/external-id/customers/concept-native-authentication). It is recommended to always use the most up-to-date version of the SDK.
 
 ## Get started
 
@@ -21,7 +23,7 @@ To use MSAL iOS and macOS in your application, you need to register your applica
 
 * For browser-delegated authentication scenarios, refer to the quickstart, [Sign in users and call Microsoft Graph from an iOS or macOS app](https://learn.microsoft.com/en-us/entra/identity-platform/quickstart-mobile-app-ios-sign-in).
 
-* For native authentication scenarios on iOS apps, refer to the Microsoft Entra External ID sample guide, [Run iOS sample app](https://learn.microsoft.com/en-us/entra/external-id/customers/how-to-run-native-authentication-sample-ios-app).
+* For native authentication scenarios, refer to the Microsoft Entra External ID sample guides, for [iOS sample app](https://learn.microsoft.com/en-us/entra/external-id/customers/how-to-run-native-authentication-sample-ios-app) or [macOS sample app](https://learn.microsoft.com/en-us/entra/external-id/customers/how-to-run-native-authentication-sample-macos-app)
 
 ## Migrate from ADAL Objective-C
 
@@ -111,7 +113,7 @@ end
 
 **For native-authentication:**
 
-To use the native authentication capabilities provided by MSAL in your iOS application, you need to specify `native-auth` as subspec for the `MSAL` dependency as follows:
+To use the native authentication capabilities provided by MSAL in your iOS or macOS application, you need to specify `native-auth` as subspec for the `MSAL` dependency as follows:
 
 ```
 use_frameworks!
@@ -176,6 +178,11 @@ After installation, please follow the official [MSAL iOS and macOS documentation
 
 For more information on common usage patterns, error handling and debugging, logging, telemetry, and other library functionalities, please refere to the official [MSAL iOS and macOS documentation](https://learn.microsoft.com/en-us/entra/msal/objc/).
 
+## Supported Versions
+
+**iOS** - MSAL supports iOS 16 and above.
+
+**macOS** - MSAL supports macOS 11 and above.
 
 ## Community help and support
 

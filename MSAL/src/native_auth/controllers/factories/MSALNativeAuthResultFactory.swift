@@ -26,66 +26,56 @@
 
 protocol MSALNativeAuthResultBuildable {
 
-    var config: MSALNativeAuthConfiguration {get}
+    var config: MSALNativeAuthInternalConfiguration {get}
+
+    func makeAccount(tokenResult: MSIDTokenResult, context: MSIDRequestContext) -> MSALAccount
 
     func makeUserAccountResult(tokenResult: MSIDTokenResult, context: MSIDRequestContext) -> MSALNativeAuthUserAccountResult?
 
-    func makeUserAccountResult(account: MSALAccount, authTokens: MSALNativeAuthTokens) -> MSALNativeAuthUserAccountResult?
+    func makeUserAccountResult(account: MSALAccount, rawIdToken: String?) -> MSALNativeAuthUserAccountResult?
 
     func makeMSIDConfiguration(scopes: [String]) -> MSIDConfiguration
 }
 
 final class MSALNativeAuthResultFactory: MSALNativeAuthResultBuildable {
 
-    let config: MSALNativeAuthConfiguration
+    let config: MSALNativeAuthInternalConfiguration
     let cacheAccessor: MSALNativeAuthCacheInterface
 
-    init(config: MSALNativeAuthConfiguration, cacheAccessor: MSALNativeAuthCacheInterface) {
+    init(config: MSALNativeAuthInternalConfiguration, cacheAccessor: MSALNativeAuthCacheInterface) {
         self.config = config
         self.cacheAccessor = cacheAccessor
     }
 
-    func makeUserAccountResult(tokenResult: MSIDTokenResult, context: MSIDRequestContext) -> MSALNativeAuthUserAccountResult? {
+    func makeAccount(tokenResult: MSIDTokenResult, context: MSIDRequestContext) -> MSALAccount {
         var jsonDictionary: [AnyHashable: Any]?
         do {
             let claims = try MSIDIdTokenClaims.init(rawIdToken: tokenResult.rawIdToken)
             jsonDictionary = claims.jsonDictionary()
             if jsonDictionary == nil {
-                MSALLogger.log(
-                    level: .error,
+                MSALNativeAuthLogger.log(
+                    level: .warning,
                     context: context,
                     format: "Initialising account without claims")
             }
         } catch {
-            MSALLogger.log(
-                level: .error,
+            MSALNativeAuthLogger.logPII(
+                level: .warning,
                 context: context,
-                format: "Claims for account could not be created - \(error)" )
+                format: "Claims for account could not be created - \(MSALLogMask.maskEUII(error))" )
         }
-        guard let account = MSALAccount.init(msidAccount: tokenResult.account,
-                                             createTenantProfile: false,
-                                             accountClaims: jsonDictionary) else {
-            MSALLogger.log(
-                level: .error,
-                context: context,
-                format: "Account could not be created")
-            return nil
-        }
-        guard let refreshToken = tokenResult.refreshToken as? MSIDRefreshToken else {
-            MSALLogger.log(
-                level: .error,
-                context: context,
-                format: "Refresh token invalid, account result could not be created")
-            return nil
-        }
-        let authTokens = MSALNativeAuthTokens(accessToken: tokenResult.accessToken,
-                                              refreshToken: refreshToken,
-                                              rawIdToken: tokenResult.rawIdToken)
-        return .init(account: account, authTokens: authTokens, configuration: config, cacheAccessor: cacheAccessor)
+        return MSALAccount.init(msidAccount: tokenResult.account,
+                                createTenantProfile: false,
+                                accountClaims: jsonDictionary)
     }
 
-    func makeUserAccountResult(account: MSALAccount, authTokens: MSALNativeAuthTokens) -> MSALNativeAuthUserAccountResult? {
-        return .init(account: account, authTokens: authTokens, configuration: config, cacheAccessor: cacheAccessor)
+    func makeUserAccountResult(tokenResult: MSIDTokenResult, context: MSIDRequestContext) -> MSALNativeAuthUserAccountResult? {
+        let account =  makeAccount(tokenResult: tokenResult, context: context)
+        return .init(account: account, rawIdToken: tokenResult.rawIdToken, configuration: config, cacheAccessor: cacheAccessor)
+    }
+
+    func makeUserAccountResult(account: MSALAccount, rawIdToken: String?) -> MSALNativeAuthUserAccountResult? {
+        return .init(account: account, rawIdToken: rawIdToken, configuration: config, cacheAccessor: cacheAccessor)
     }
 
     func makeMSIDConfiguration(scopes: [String]) -> MSIDConfiguration {
