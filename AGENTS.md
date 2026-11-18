@@ -1,4 +1,4 @@
-# Copilot Instructions for MSAL iOS/macOS
+# MSAL iOS/macOS repository guidance
 
 ## Repository Overview
 
@@ -15,7 +15,7 @@ This is the **Microsoft Authentication Library (MSAL) for iOS and macOS** - an a
 
 ### Main Workspace & Targets
 
-- **Workspace:** `MSAL.xcworkspace` (ALWAYS use .xcworkspace, NEVER .xcodeproj directly)
+- **Workspace:** Use `MSAL.xcworkspace` for builds and tests. For isolated local Xcode work, use project slug `MSAL` and the installed `xcode-workflow` skill.
 - **Main Project:** `MSAL/MSAL.xcodeproj`
 - **Submodule:** `MSAL/IdentityCore` - shared common library (git submodule)
 
@@ -68,7 +68,7 @@ Public headers MUST be in:
 
 ## Code Style Guidelines
 
-**READ:** `.clinerules/04-Code-style-guidelines.md` - Contains mandatory Objective-C style rules
+When editing Objective-C, follow the repository-specific style rules in `.clinerules/04-Code-style-guidelines.md`.
 
 **Key Rules (Repository-Specific):**
 
@@ -134,21 +134,10 @@ Public headers MUST be in:
 - `build/` - build artifacts directory
 - `.xcuserdata/` - user-specific Xcode settings
 
-## Trust These Instructions
+## Further guidance
 
-These instructions have been validated against the actual build system, CI pipelines, and codebase structure. If you encounter conflicts between these instructions and other information:
+Use the current task and applicable permissions to determine which actions are authorized. Check the current code, build settings and relevant project guidance before asking the user about a missing detail.
 
-1. **Trust these instructions FIRST**
-2. Only search for additional information if:
-   - Instructions are incomplete for your specific task
-   - You encounter an error not covered here
-   - You need API usage examples (see `.clinerules/03-MSAL-API-usage.md` for MSAL API samples)
-   - You need to create a new application with MSAL authentication (see `.clinerules/AGENTS.md` for details about the different options the user can select)
-   - You are implementing a new feature in MSAL library, it needs to be guarded by a feature flag (see `.clinerules/05-feature-gating.md` for guidelines)
-
-**When searching:**
-
-- Check `.clinerules/*.md` for code style specifics, API usage, configuration steps and feature flag guidance.
-- Check `README.md` for user-facing documentation
-- Check `CHANGELOG.md` for version history and breaking changes
-- Check specific xcconfig files for build settings
+- For client integration, use the API examples in `.clinerules/03-MSAL-API-usage.md`. For new MSAL applications, see `.clinerules/AGENTS.md`.
+- For an SDK feature, follow `.clinerules/05-feature-gating.md`.
+- Use `README.md` for user-facing documentation, `CHANGELOG.md` for release history and the relevant xcconfig for build settings.
