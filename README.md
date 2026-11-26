@@ -182,7 +182,7 @@ For more information on common usage patterns, error handling and debugging, log
 
 **iOS** - MSAL supports iOS 16 and above.
 
-**macOS** - MSAL supports macOS 11 and above.
+**macOS** - Building this fork from source requires macOS 12 or later as the deployment target.
 
 ## Community help and support
 

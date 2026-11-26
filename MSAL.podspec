@@ -14,7 +14,7 @@ Pod::Spec.new do |s|
   s.social_media_url   = "https://twitter.com/azuread"
   s.platform     = :ios, :osx
   s.ios.deployment_target = "16.0"
-  s.osx.deployment_target = "11.0"
+  s.osx.deployment_target = "12.0"
   s.source       = { 
     :git => "https://github.com/AzureAD/microsoft-authentication-library-for-objc.git",
     :tag => s.version.to_s,
